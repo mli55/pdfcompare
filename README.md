@@ -1,30 +1,31 @@
 # pdfcompare
 
-A visual diff tool for born-digital PDFs.  Given an *old* and *new* version of a PDF, **pdfcompare** highlights every changed word directly on the original pages — deletions in red, additions in green — so you can review revisions at a glance.
+**pdfcompare** is a lightweight visual diff tool for born-digital PDFs.
 
-Built for **academic papers** (IEEE, ACM, Springer, etc.) where formatting matters and changes are often subtle, but works with any born-digital PDF.
+Given an old and a new version of a PDF, it writes highlights directly onto the original pages so revisions are easy to review: deletions on the old file, additions on the new file.
 
-## What It Does
+It is mainly designed for academic papers and technical documents, where small wording changes matter and layout is part of the review process.
 
-| Old (deletions in red) | New (additions in green) |
-|:-:|:-:|
-| ![old](examples/old_marked.pdf) | ![new](examples/new_marked.pdf) |
+<p align="center">
+  <img src="examples/old_marked.png" alt="Old PDF with deletions highlighted" width="48%" />
+  <img src="examples/new_marked.png" alt="New PDF with additions highlighted" width="48%" />
+</p>
 
-pdfcompare handles the tricky parts of comparing formatted PDFs:
+## Features
 
-- **Multi-column layouts** — Changes in a two-column paper are detected per-column without bleeding highlights across the gutter.
-- **Cross-page reflow** — When an edit on page 3 pushes text onto page 4, only the actual edit is highlighted. Reflowed-but-unchanged text is left clean.
-- **Line-break hyphenation** — Words split by hyphens at line breaks (e.g. `aver-` / `age`) are rejoined before comparison.
-- **Moved paragraphs** — Text that appears in both documents but at different positions (e.g. a paragraph that moved from page 5 to page 6) is recognized and excluded from the diff.
-- **Sub-word precision** — When a single word is partially changed (e.g. `systems` → `pipelines`), only the differing characters are highlighted, not the entire word.
+- Highlights changes directly on the original PDF pages
+- Works well for born-digital PDFs such as papers, reports, and drafts
+- Handles multi-column layouts better than plain text diff tools
+- Tries to reduce noisy highlights from simple reflow
+- Keeps the review workflow visual and page-based
 
-## Install
+## Installation
+
+If you are using the repository directly:
 
 ```sh
-pip install pdfcompare
+pip install git+https://github.com/mli55/pdfcompare.git
 ```
-
-Requires Python 3.10+ and [PyMuPDF](https://pymupdf.readthedocs.io/).
 
 ## Usage
 
@@ -34,42 +35,46 @@ pdfcompare old.pdf new.pdf
 
 This writes two annotated files:
 
-- `old_marked.pdf` — original pages with deletions highlighted in red
-- `new_marked.pdf` — revised pages with additions highlighted in green
+- `old_marked.pdf` — original pages with deletions highlighted
+- `new_marked.pdf` — revised pages with additions highlighted
 
 ### Options
 
-```sh
-pdfcompare old.pdf new.pdf --old-out old_diff.pdf --new-out new_diff.pdf --opacity 0.5
-```
-
 | Flag | Default | Description |
-|------|---------|-------------|
+| ---- | ------- | ----------- |
 | `--old-out` | `old_marked.pdf` | Output path for the annotated old PDF |
 | `--new-out` | `new_marked.pdf` | Output path for the annotated new PDF |
 | `--opacity` | `0.35` | Highlight opacity (0.0–1.0) |
 
-### As a Library
-
-```python
-from pdfcompare import extract_document, compare_documents, apply_annotations
-
-old_pages = extract_document("old.pdf")
-new_pages = extract_document("new.pdf")
-
-old_diffs, new_diffs = compare_documents(old_pages, new_pages)
-
-apply_annotations("old.pdf", "old_diff.pdf", old_diffs, color=(1.0, 0.75, 0.75))
-apply_annotations("new.pdf", "new_diff.pdf", new_diffs, color=(0.75, 1.0, 0.75))
-```
-
 ## How It Works
 
-1. **Extract** — Text is extracted word-by-word from each page using PyMuPDF, preserving exact bounding-box coordinates.
-2. **Flatten & Diff** — All lines from all pages are flattened into a single sequence and compared globally using `difflib.SequenceMatcher`. This lets the algorithm see across page boundaries.
-3. **Word-level refinement** — Within each changed block, a second word-level diff isolates the individual words (and sub-word regions) that actually changed.
-4. **Reflow suppression** — A second pass examines page-boundary candidates and suppresses highlights on text that merely reflowed to an adjacent page without changing.
-5. **Annotate** — Surviving diff rects are written back as native PDF highlight annotations on the original pages.
+```
+ old.pdf    new.pdf
+   │           │
+   ▼           ▼
+┌──────────────────┐
+│  Extract words   │  PyMuPDF: word text + bounding boxes
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│  Global diff     │  Flatten all pages → SequenceMatcher
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│  Word-level diff │  Per-word & sub-word precision
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│  Reflow filter   │  Suppress cross-page / cross-column noise
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│  Annotate PDFs   │  Highlights on original pages
+└────────┬─────────┘
+         ▼
+ old_marked.pdf
+ new_marked.pdf
+```
 
 ## License
 

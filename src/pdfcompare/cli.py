@@ -33,21 +33,19 @@ def main() -> None:
 
     old_rects, new_rects = compare_documents(old_pages, new_pages)
 
-    # old side: red-ish
     apply_annotations(
         input_pdf=old_pdf,
         output_pdf=args.old_out,
         page_to_rects=old_rects,
-        color=(1.0, 0.75, 0.75),
+        color=(1.0, 0.0, 0.0),
         opacity=args.opacity,
     )
 
-    # new side: green-ish
     apply_annotations(
         input_pdf=new_pdf,
         output_pdf=args.new_out,
         page_to_rects=new_rects,
-        color=(0.75, 1.0, 0.75),
+        color=(0.0, 1.0, 0.0),
         opacity=args.opacity,
     )
 
